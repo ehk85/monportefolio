@@ -1,5 +1,6 @@
-import { Github, FileText, Award } from "lucide-react";
+import { Github, FileText, Award, Linkedin } from "lucide-react";
 import { projects } from "@/data/projects";
+import { profile } from "@/data/profile";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
 import { Tag } from "./ui/Tag";
@@ -55,6 +56,16 @@ export function Projects() {
                     className="inline-flex items-center gap-1.5 text-ink-secondary transition-colors hover:text-accent-cyan"
                   >
                     <FileText size={14} /> Rapport
+                  </a>
+                )}
+                {!project.githubUrl && (
+                  <a
+                    href={profile.linkedin.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-ink-secondary transition-colors hover:text-accent-cyan"
+                  >
+                    <Linkedin size={14} /> En discuter sur LinkedIn
                   </a>
                 )}
               </div>

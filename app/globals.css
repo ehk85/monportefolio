@@ -23,3 +23,14 @@ body {
 .text-gradient {
   @apply bg-signature-gradient bg-clip-text text-transparent;
 }
+
+@keyframes connector-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.connector-path {
+  animation: connector-flow 1.1s linear infinite;
+  transition: opacity 0.35s ease;
+}

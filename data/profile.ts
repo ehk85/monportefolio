@@ -9,7 +9,7 @@ export const profile = {
   linkedin: { label: "@emmanuel-konate", url: "https://www.linkedin.com/in/emmanuel-konate" },
   github: { label: "@ehk85", url: "https://github.com/ehk85" },
   summary:
-    "Actuellement en MBA/MSc Expert en Management des Systèmes d'Information, je construis des ponts entre la donnée, l'intelligence artificielle et le développement web, du back-end au front-end. Je souhaite mettre cette double casquette technique et fonctionnelle au service de solutions Data & IA à impact concret, en lien étroit avec les besoins métiers.",
+    "Fort de plusieurs années d'expérience en tant que développeur, en France et en dehors, je m'oriente vers des projets à fort contenu technique combinant analyse de données, intelligence artificielle et ingénierie logicielle. Intéressé par des environnements complexes et pluridisciplinaires, je souhaite contribuer à la conception et au déploiement de solutions Data et IA à impact concret, en lien étroit avec les besoins métiers.",
   aboutText:
     "Mon parcours croise trois mondes. La gestion de projet, le développement web et la data science. Chez Capgemini comme chez Nexora AI, j'ai appris à traduire des besoins métier en solutions concrètes. Un dashboard CRM utilisé au quotidien par des managers, ou un pipeline IA capable d'automatiser le traitement de tickets clients. Cette polyvalence, associée à une aisance dans la collaboration internationale, me permet d'avancer aussi bien côté code que côté pilotage, toujours avec la même exigence de clarté et de résultat.",
 };
