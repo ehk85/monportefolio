@@ -9,6 +9,14 @@ export type Education = {
 
 export const education: Education[] = [
   {
+    degree: "MSc MBA Expert en Management des Systèmes d'Information",
+    school: "Epitech",
+    location: "Lyon, France",
+    period: "Sept. 2026 — Oct. 2027",
+    current: true,
+    detail: "Année en cours",
+  },
+  {
     degree: "Mastère Chef de projet Data / Intelligence Artificielle",
     school: "NEXA Digital School",
     location: "Lyon, France",
