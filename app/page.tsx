@@ -8,20 +8,23 @@ import { Education } from "@/components/Education";
 import { LanguagesInterests } from "@/components/LanguagesInterests";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
+import { ContractProvider } from "@/components/ContractGate";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-bg-primary">
-      <Header />
-      <Hero />
-      <About />
-      <Experience />
-      <Projects />
-      <Skills />
-      <Education />
-      <LanguagesInterests />
-      <Contact />
-      <Footer />
-    </main>
+    <ContractProvider>
+      <main className="min-h-screen bg-bg-primary">
+        <Header />
+        <Hero />
+        <About />
+        <Experience />
+        <Projects />
+        <Skills />
+        <Education />
+        <LanguagesInterests />
+        <Contact />
+        <Footer />
+      </main>
+    </ContractProvider>
   );
 }

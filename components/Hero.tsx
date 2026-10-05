@@ -4,8 +4,13 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail } from "lucide-react";
 import { profile } from "@/data/profile";
+import { contractChoices } from "@/data/contract";
+import { useContract } from "./ContractGate";
 
 export function Hero() {
+  const { choice } = useContract();
+  const availability = choice ? contractChoices[choice].availability : profile.availability;
+
   return (
     <section id="top" className="relative flex min-h-screen items-center overflow-hidden pt-16">
       <div className="pointer-events-none absolute inset-0 bg-grid-pattern bg-grid [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_75%)]" />
@@ -19,7 +24,7 @@ export function Hero() {
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
           <span className="inline-flex items-center rounded-full border border-accent-emerald/30 bg-accent-emerald/10 px-4 py-1 text-sm font-medium text-accent-emerald">
-            {profile.availability}
+            {availability}
           </span>
 
           <h1 className="mt-6 font-heading text-4xl font-bold leading-tight text-ink-primary sm:text-5xl lg:text-6xl">

@@ -1,7 +1,11 @@
+"use client";
+
 import { Mail, Phone, Linkedin, Github } from "lucide-react";
 import { profile } from "@/data/profile";
+import { contractChoices } from "@/data/contract";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
+import { useContract } from "./ContractGate";
 
 const contactLinks = [
   { icon: Mail, label: profile.email, href: `mailto:${profile.email}` },
@@ -11,6 +15,9 @@ const contactLinks = [
 ];
 
 export function Contact() {
+  const { choice } = useContract();
+  const availability = choice ? contractChoices[choice].availability : profile.availability;
+
   return (
     <section id="contact" className="bg-bg-surface/40 py-24">
       <div className="section-container">
@@ -18,7 +25,7 @@ export function Contact() {
 
         <AnimatedSection className="mx-auto mt-4 max-w-xl text-center">
           <p className="text-ink-secondary">
-            {profile.availability}. N'hésitez pas à me contacter pour échanger sur une
+            {availability}. N'hésitez pas à me contacter pour échanger sur une
             opportunité ou un projet Data & IA.
           </p>
         </AnimatedSection>
