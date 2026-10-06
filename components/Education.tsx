@@ -8,6 +8,8 @@ import { useContract } from "./ContractGate";
 export function Education() {
   const { choice } = useContract();
   const isAlternance = choice === "alternance";
+  const isCdi = choice === "cdi" || choice === "cdd";
+  const visibleEducation = education.filter((edu) => !(isCdi && edu.current));
 
   return (
     <section id="education" className="bg-bg-surface/40 py-24">
@@ -15,7 +17,7 @@ export function Education() {
         <SectionHeading eyebrow="Formation" title="Diplômes & Formations" />
 
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {education.map((edu, i) => {
+          {visibleEducation.map((edu, i) => {
             const showOngoingBadge = edu.current && !isAlternance;
             const detail = edu.current && isAlternance ? "Formation souhaitée" : edu.detail;
             return (
