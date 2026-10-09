@@ -29,6 +29,16 @@ export const regions: Record<RegionKey, Region> = {
   },
 };
 
+export const contractTypes = [
+  "Stage",
+  "Stage alterné",
+  "Alternance",
+  "CDI",
+  "CDD",
+  "Freelance",
+] as const;
+export type ContractType = (typeof contractTypes)[number];
+
 export type Experience = {
   id: string;
   role: string;
@@ -36,6 +46,7 @@ export type Experience = {
   location: string;
   region: RegionKey;
   period: string;
+  contractType?: ContractType | null;
   current?: boolean;
   missions: string[];
   stack: string[];

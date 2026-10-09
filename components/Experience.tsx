@@ -200,6 +200,11 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
                           <p className="text-xs text-ink-secondary">
                             {job.company} — {job.location}
                           </p>
+                          {job.contractType && (
+                            <span className="mt-1.5 inline-block rounded-full bg-accent-emerald/10 px-2 py-0.5 text-[11px] font-medium text-accent-emerald">
+                              {job.contractType}
+                            </span>
+                          )}
                           {job.missions.length > 0 && (
                             <ul className="mt-2 space-y-1.5">
                               {job.missions.map((m) => (

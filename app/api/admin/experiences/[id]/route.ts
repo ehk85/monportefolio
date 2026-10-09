@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { regions, type RegionKey } from "@/data/experiences";
+import { regions, contractTypes, type RegionKey } from "@/data/experiences";
 
 function linesToArray(value: unknown): string[] {
   if (typeof value !== "string") return [];
@@ -45,7 +45,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ ok: true });
   }
 
-  const { role, company, location, region, period, isCurrent, missions, stack } = payload;
+  const { role, company, location, region, period, contractType, isCurrent, missions, stack } =
+    payload;
 
   if (typeof role !== "string" || role.trim().length === 0) {
     return NextResponse.json({ error: "Le poste est requis." }, { status: 400 });
@@ -65,6 +66,11 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       { status: 400 }
     );
   }
+  const normalizedContractType =
+    typeof contractType === "string" && contractType.trim().length > 0 ? contractType.trim() : null;
+  if (normalizedContractType && !contractTypes.includes(normalizedContractType as (typeof contractTypes)[number])) {
+    return NextResponse.json({ error: "Type de contrat invalide." }, { status: 400 });
+  }
 
   const { error } = await supabase
     .from("experiences")
@@ -74,6 +80,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       location: location.trim(),
       region: region as RegionKey,
       period: period.trim(),
+      contract_type: normalizedContractType,
       is_current: Boolean(isCurrent),
       missions: linesToArray(missions),
       stack: linesToArray(stack),

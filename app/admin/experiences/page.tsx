@@ -21,7 +21,9 @@ export default async function AdminExperiencesPage() {
 
   const { data, error } = await supabase
     .from("experiences")
-    .select("id, role, company, location, region, period, is_current, missions, stack, sort_order")
+    .select(
+      "id, role, company, location, region, period, contract_type, is_current, missions, stack, sort_order"
+    )
     .order("sort_order", { ascending: true });
 
   const items: Experience[] = (data ?? []).map((row) => ({
@@ -31,6 +33,7 @@ export default async function AdminExperiencesPage() {
     location: row.location,
     region: row.region,
     period: row.period,
+    contractType: row.contract_type,
     current: row.is_current,
     missions: row.missions ?? [],
     stack: row.stack ?? [],

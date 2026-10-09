@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { regions, type RegionKey } from "@/data/experiences";
+import { regions, contractTypes, type RegionKey } from "@/data/experiences";
 
 function linesToArray(value: unknown): string[] {
   if (typeof value !== "string") return [];
@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
 
-  const { role, company, location, region, period, isCurrent, missions, stack } = (body ??
-    {}) as Record<string, unknown>;
+  const { role, company, location, region, period, contractType, isCurrent, missions, stack } =
+    (body ?? {}) as Record<string, unknown>;
 
   if (typeof role !== "string" || role.trim().length === 0) {
     return NextResponse.json({ error: "Le poste est requis." }, { status: 400 });
@@ -44,6 +44,11 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
+  const normalizedContractType =
+    typeof contractType === "string" && contractType.trim().length > 0 ? contractType.trim() : null;
+  if (normalizedContractType && !contractTypes.includes(normalizedContractType as (typeof contractTypes)[number])) {
+    return NextResponse.json({ error: "Type de contrat invalide." }, { status: 400 });
+  }
 
   const { data: minRow } = await supabase
     .from("experiences")
@@ -59,6 +64,7 @@ export async function POST(request: Request) {
     location: location.trim(),
     region: region as RegionKey,
     period: period.trim(),
+    contract_type: normalizedContractType,
     is_current: Boolean(isCurrent),
     missions: linesToArray(missions),
     stack: linesToArray(stack),

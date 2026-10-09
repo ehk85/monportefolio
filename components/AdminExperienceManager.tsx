@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronUp, ChevronDown, Pencil, Trash2, Plus } from "lucide-react";
-import { regions, type RegionKey, type Experience } from "@/data/experiences";
+import { regions, contractTypes, type RegionKey, type Experience } from "@/data/experiences";
 
 const regionOrder: RegionKey[] = ["lyon", "paris", "londres", "abidjan"];
 
@@ -13,6 +13,7 @@ type FormState = {
   location: string;
   region: RegionKey;
   period: string;
+  contractType: string;
   isCurrent: boolean;
   missions: string;
   stack: string;
@@ -24,6 +25,7 @@ const emptyForm: FormState = {
   location: "",
   region: "lyon",
   period: "",
+  contractType: "",
   isCurrent: false,
   missions: "",
   stack: "",
@@ -36,6 +38,7 @@ function toFormState(exp: Experience): FormState {
     location: exp.location,
     region: exp.region,
     period: exp.period,
+    contractType: exp.contractType ?? "",
     isCurrent: Boolean(exp.current),
     missions: exp.missions.join("\n"),
     stack: exp.stack.join("\n"),
@@ -74,6 +77,7 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
       location: form.location,
       region: form.region,
       period: form.period,
+      contractType: form.contractType,
       isCurrent: form.isCurrent,
       missions: form.missions,
       stack: form.stack,
@@ -173,9 +177,24 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
           <input
             value={form.period}
             onChange={(e) => setForm((f) => ({ ...f, period: e.target.value }))}
-            placeholder="ex: Jan. 2025 — Sept. 2025 · Alternance"
+            placeholder="ex: Jan. 2025 — Sept. 2025"
             className="mt-1 w-full rounded-lg border border-white/10 bg-bg-primary px-3 py-2 text-sm text-ink-primary placeholder:text-ink-secondary/50 focus:border-accent-cyan/50 focus:outline-none"
           />
+        </label>
+        <label>
+          <span className="text-xs font-medium text-ink-secondary">Type de contrat</span>
+          <select
+            value={form.contractType}
+            onChange={(e) => setForm((f) => ({ ...f, contractType: e.target.value }))}
+            className="mt-1 w-full rounded-lg border border-white/10 bg-bg-primary px-3 py-2 text-sm text-ink-primary focus:border-accent-cyan/50 focus:outline-none"
+          >
+            <option value="">— Aucun —</option>
+            {contractTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="flex items-center gap-2 pt-6 text-sm text-ink-secondary">
           <input
@@ -259,6 +278,7 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
                   </p>
                   <p className="mt-0.5 text-xs text-ink-secondary">
                     {exp.location} · {regions[exp.region].label} · {exp.period}
+                    {exp.contractType && ` · ${exp.contractType}`}
                     {exp.current && (
                       <span className="ml-2 text-accent-emerald">● En cours</span>
                     )}
