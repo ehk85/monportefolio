@@ -11,6 +11,7 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { ContractProvider } from "@/components/ContractGate";
 import { getExperiences, getEducation } from "@/lib/supabase/content";
+import { getRegions, getCountryMaps } from "@/lib/supabase/geo";
 
 // Revalide la page régulièrement pour que les nouveaux avis approuvés,
 // expériences et formations (via /admin) apparaissent sans avoir besoin
@@ -18,7 +19,12 @@ import { getExperiences, getEducation } from "@/lib/supabase/content";
 export const revalidate = 120;
 
 export default async function Home() {
-  const [experiences, education] = await Promise.all([getExperiences(), getEducation()]);
+  const [experiences, education, regions, countryMaps] = await Promise.all([
+    getExperiences(),
+    getEducation(),
+    getRegions(),
+    getCountryMaps(),
+  ]);
 
   return (
     <ContractProvider>
@@ -26,7 +32,7 @@ export default async function Home() {
         <Header />
         <Hero />
         <About />
-        <Experience experiences={experiences} />
+        <Experience experiences={experiences} regions={regions} countryMaps={countryMaps} />
         <Projects />
         <Skills />
         <Education education={education} />

@@ -1,17 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronUp, ChevronDown, Pencil, Trash2, Plus } from "lucide-react";
-import { regions, contractTypes, type RegionKey, type Experience } from "@/data/experiences";
-
-const regionOrder: RegionKey[] = ["lyon", "paris", "londres", "abidjan"];
+import { ChevronUp, ChevronDown, Pencil, Trash2, Plus, Search, Globe2 } from "lucide-react";
+import { contractTypes, type Experience } from "@/data/experiences";
+import type { Region } from "@/data/region";
 
 type FormState = {
   role: string;
   company: string;
   location: string;
-  region: RegionKey;
+  region: string;
   period: string;
   contractType: string;
   isCurrent: boolean;
@@ -19,17 +18,19 @@ type FormState = {
   stack: string;
 };
 
-const emptyForm: FormState = {
-  role: "",
-  company: "",
-  location: "",
-  region: "lyon",
-  period: "",
-  contractType: "",
-  isCurrent: false,
-  missions: "",
-  stack: "",
-};
+function createEmptyForm(regions: Region[]): FormState {
+  return {
+    role: "",
+    company: "",
+    location: "",
+    region: regions[0]?.key ?? "",
+    period: "",
+    contractType: "",
+    isCurrent: false,
+    missions: "",
+    stack: "",
+  };
+}
 
 function toFormState(exp: Experience): FormState {
   return {
@@ -45,16 +46,45 @@ function toFormState(exp: Experience): FormState {
   };
 }
 
-export function AdminExperienceManager({ initialItems }: { initialItems: Experience[] }) {
+type CityPreview = {
+  label: string;
+  country: string;
+  countryCode: string;
+  lat: number;
+  lng: number;
+};
+
+export function AdminExperienceManager({
+  initialItems,
+  regions,
+}: {
+  initialItems: Experience[];
+  regions: Region[];
+}) {
   const router = useRouter();
+  const [localRegions, setLocalRegions] = useState<Region[]>(regions);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
-  const [form, setForm] = useState<FormState>(emptyForm);
+  const [form, setForm] = useState<FormState>(() => createEmptyForm(regions));
   const [busyId, setBusyId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  const [cityPanelOpen, setCityPanelOpen] = useState(false);
+  const [cityQuery, setCityQuery] = useState("");
+  const [cityPreview, setCityPreview] = useState<CityPreview | null>(null);
+  const [citySearching, setCitySearching] = useState(false);
+  const [cityGenerating, setCityGenerating] = useState(false);
+  const [cityError, setCityError] = useState("");
+
+  useEffect(() => {
+    setLocalRegions(regions);
+  }, [regions]);
+
+  const regionsByKey: Record<string, Region> = {};
+  for (const r of localRegions) regionsByKey[r.key] = r;
+
   const startCreate = () => {
-    setForm(emptyForm);
+    setForm(createEmptyForm(localRegions));
     setEditingId("new");
     setError("");
   };
@@ -128,6 +158,139 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
     }
   };
 
+  const openCityPanel = () => {
+    setCityPanelOpen(true);
+    setCityQuery("");
+    setCityPreview(null);
+    setCityError("");
+  };
+  const closeCityPanel = () => {
+    setCityPanelOpen(false);
+    setCityQuery("");
+    setCityPreview(null);
+    setCityError("");
+  };
+
+  const searchCity = async () => {
+    setCitySearching(true);
+    setCityError("");
+    setCityPreview(null);
+    try {
+      const res = await fetch("/api/admin/regions/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: cityQuery }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCityError(body.error || "Échec de la recherche.");
+        return;
+      }
+      setCityPreview(body);
+    } finally {
+      setCitySearching(false);
+    }
+  };
+
+  const confirmCity = async () => {
+    if (!cityPreview) return;
+    setCityGenerating(true);
+    setCityError("");
+    try {
+      const res = await fetch("/api/admin/regions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(cityPreview),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCityError(body.error || "Échec de la génération.");
+        return;
+      }
+      const newRegion: Region = {
+        key: body.key,
+        label: cityPreview.label,
+        country: cityPreview.country,
+        countryCode: cityPreview.countryCode,
+        lat: cityPreview.lat,
+        lng: cityPreview.lng,
+        mapX: 0,
+        mapY: 0,
+      };
+      setLocalRegions((prev) => [...prev, newRegion]);
+      setForm((f) => ({ ...f, region: newRegion.key }));
+      closeCityPanel();
+      router.refresh();
+    } finally {
+      setCityGenerating(false);
+    }
+  };
+
+  const CityPanel = (
+    <div className="mt-2 rounded-lg border border-accent-emerald/30 bg-bg-primary p-4">
+      <p className="flex items-center gap-1.5 text-xs font-medium text-accent-emerald">
+        <Globe2 size={14} /> Ajouter une nouvelle ville
+      </p>
+      <p className="mt-1 text-xs text-ink-secondary">
+        Recherche une ville ; sa carte de pays sera générée automatiquement si elle n&apos;existe
+        pas encore (frontières réelles, projection sur le globe).
+      </p>
+      <div className="mt-3 flex gap-2">
+        <input
+          value={cityQuery}
+          onChange={(e) => setCityQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              searchCity();
+            }
+          }}
+          placeholder="ex: Madrid, Espagne"
+          className="flex-1 rounded-lg border border-white/10 bg-bg-surface px-3 py-2 text-sm text-ink-primary placeholder:text-ink-secondary/50 focus:border-accent-emerald/50 focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={searchCity}
+          disabled={citySearching || cityQuery.trim().length < 2}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-accent-emerald/40 px-3 py-2 text-sm font-medium text-accent-emerald hover:bg-accent-emerald/10 disabled:opacity-40"
+        >
+          <Search size={14} /> {citySearching ? "Recherche…" : "Rechercher"}
+        </button>
+      </div>
+
+      {cityError && <p className="mt-2 text-sm text-red-400">{cityError}</p>}
+
+      {cityPreview && (
+        <div className="mt-3 rounded-lg border border-white/10 bg-bg-surface p-3">
+          <p className="text-sm text-ink-primary">
+            {cityPreview.label}, {cityPreview.country}{" "}
+            <span className="text-ink-secondary">({cityPreview.countryCode.toUpperCase()})</span>
+          </p>
+          <p className="mt-0.5 text-xs text-ink-secondary">
+            lat {cityPreview.lat.toFixed(3)} / lng {cityPreview.lng.toFixed(3)}
+          </p>
+          <div className="mt-3 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeCityPanel}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-ink-secondary hover:text-ink-primary"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              onClick={confirmCity}
+              disabled={cityGenerating}
+              className="rounded-lg bg-signature-gradient px-3 py-1.5 text-xs font-semibold text-bg-primary disabled:opacity-40"
+            >
+              {cityGenerating ? "Génération de la carte…" : "Confirmer et générer la carte"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const Form = (
     <div className="rounded-xl border border-accent-cyan/30 bg-bg-surface p-5">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -160,17 +323,28 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
           <span className="text-xs font-medium text-ink-secondary">
             Zone géographique (globe)
           </span>
-          <select
-            value={form.region}
-            onChange={(e) => setForm((f) => ({ ...f, region: e.target.value as RegionKey }))}
-            className="mt-1 w-full rounded-lg border border-white/10 bg-bg-primary px-3 py-2 text-sm text-ink-primary focus:border-accent-cyan/50 focus:outline-none"
-          >
-            {regionOrder.map((key) => (
-              <option key={key} value={key}>
-                {regions[key].label} ({regions[key].country})
-              </option>
-            ))}
-          </select>
+          <div className="mt-1 flex gap-2">
+            <select
+              value={form.region}
+              onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+              className="w-full rounded-lg border border-white/10 bg-bg-primary px-3 py-2 text-sm text-ink-primary focus:border-accent-cyan/50 focus:outline-none"
+            >
+              {localRegions.map((r) => (
+                <option key={r.key} value={r.key}>
+                  {r.label} ({r.country})
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={openCityPanel}
+              title="Ajouter une nouvelle ville"
+              className="shrink-0 rounded-lg border border-accent-emerald/40 px-2.5 text-accent-emerald hover:bg-accent-emerald/10"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+          {cityPanelOpen && CityPanel}
         </label>
         <label>
           <span className="text-xs font-medium text-ink-secondary">Période</span>
@@ -277,7 +451,7 @@ export function AdminExperienceManager({ initialItems }: { initialItems: Experie
                     {exp.role} — {exp.company}
                   </p>
                   <p className="mt-0.5 text-xs text-ink-secondary">
-                    {exp.location} · {regions[exp.region].label} · {exp.period}
+                    {exp.location} · {regionsByKey[exp.region]?.label ?? exp.region} · {exp.period}
                     {exp.contractType && ` · ${exp.contractType}`}
                     {exp.current && (
                       <span className="ml-2 text-accent-emerald">● En cours</span>

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { regions, contractTypes, type RegionKey } from "@/data/experiences";
+import { contractTypes } from "@/data/experiences";
 
 function linesToArray(value: unknown): string[] {
   if (typeof value !== "string") return [];
@@ -38,11 +38,16 @@ export async function POST(request: Request) {
   if (typeof period !== "string" || period.trim().length === 0) {
     return NextResponse.json({ error: "La période est requise." }, { status: 400 });
   }
-  if (typeof region !== "string" || !(region in regions)) {
-    return NextResponse.json(
-      { error: "Zone géographique invalide (lyon, paris, londres ou abidjan)." },
-      { status: 400 }
-    );
+  if (typeof region !== "string" || region.trim().length === 0) {
+    return NextResponse.json({ error: "Zone géographique requise." }, { status: 400 });
+  }
+  const { data: regionRow } = await supabase
+    .from("regions")
+    .select("key")
+    .eq("key", region)
+    .maybeSingle();
+  if (!regionRow) {
+    return NextResponse.json({ error: "Zone géographique inconnue." }, { status: 400 });
   }
   const normalizedContractType =
     typeof contractType === "string" && contractType.trim().length > 0 ? contractType.trim() : null;
@@ -62,7 +67,7 @@ export async function POST(request: Request) {
     role: role.trim(),
     company: company.trim(),
     location: location.trim(),
-    region: region as RegionKey,
+    region,
     period: period.trim(),
     contract_type: normalizedContractType,
     is_current: Boolean(isCurrent),

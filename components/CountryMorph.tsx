@@ -1,21 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { countryDots, cityPoints, type Point } from "@/data/countryDots";
-import { regions, type RegionKey, type CountryCode } from "@/data/experiences";
+import { useEffect, useMemo, useRef } from "react";
+import type { Region, CountryMap } from "@/data/region";
 
 const EXPLODE_MS = 380;
 const CONVERGE_MS = 760;
 const CLOSE_EXPLODE_MS = 300;
 const CLOSE_CONVERGE_MS = 620;
 const STRIDE = 2;
+const POOL_SIZE = 700;
 
-const POOL: Record<CountryCode, Point[]> = {
-  fra: countryDots.fra.points.filter((_, i) => i % STRIDE === 0),
-  gbr: countryDots.gbr.points.filter((_, i) => i % STRIDE === 0),
-  civ: countryDots.civ.points.filter((_, i) => i % STRIDE === 0),
-};
-const POOL_SIZE = POOL.fra.length;
+type Point = [number, number];
 
 type Land = {
   x: number;
@@ -32,7 +27,7 @@ type Land = {
 };
 
 type CityDot = {
-  key: RegionKey;
+  key: string;
   x: number;
   y: number;
   vx: number;
@@ -64,21 +59,20 @@ function randRange(a: number, b: number) {
   return a + Math.random() * (b - a);
 }
 
-const citiesByCountry: Record<CountryCode, RegionKey[]> = { fra: [], gbr: [], civ: [] };
-(Object.keys(regions) as RegionKey[]).forEach((key) => {
-  citiesByCountry[regions[key].countryCode].push(key);
-});
-
 type Phase = "idle-sphere" | "exploding" | "converging" | "settled";
 type Mode = "opening" | "closing" | "switching" | null;
 
 export function CountryMorph({
   activeRegion,
+  regions,
+  countryMaps,
   size = 300,
   onPinPixel,
   onSphereHiddenChange,
 }: {
-  activeRegion: RegionKey | null;
+  activeRegion: string | null;
+  regions: Region[];
+  countryMaps: Record<string, CountryMap>;
   size?: number;
   onPinPixel: (pos: { x: number; y: number; opacity: number } | null) => void;
   onSphereHiddenChange: (hidden: boolean) => void;
@@ -89,13 +83,34 @@ export function CountryMorph({
   const phaseRef = useRef<Phase>("idle-sphere");
   const modeRef = useRef<Mode>(null);
   const elapsedRef = useRef(0);
-  const prevRegionRef = useRef<RegionKey | null>(null);
-  const activeRegionRef = useRef<RegionKey | null>(null);
+  const prevRegionRef = useRef<string | null>(null);
+  const activeRegionRef = useRef<string | null>(null);
   activeRegionRef.current = activeRegion;
   const onPinPixelRef = useRef(onPinPixel);
   onPinPixelRef.current = onPinPixel;
   const onSphereHiddenChangeRef = useRef(onSphereHiddenChange);
   onSphereHiddenChangeRef.current = onSphereHiddenChange;
+
+  const regionsByKey = useMemo(
+    () => Object.fromEntries(regions.map((r) => [r.key, r])),
+    [regions]
+  );
+
+  const citiesByCountry = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const r of regions) {
+      (map[r.countryCode] ??= []).push(r.key);
+    }
+    return map;
+  }, [regions]);
+
+  const pool = useMemo(() => {
+    const map: Record<string, Point[]> = {};
+    for (const [code, m] of Object.entries(countryMaps)) {
+      map[code] = m.points.filter((_, i) => i % STRIDE === 0);
+    }
+    return map;
+  }, [countryMaps]);
 
   // build the land particle pool once
   useEffect(() => {
@@ -122,13 +137,13 @@ export function CountryMorph({
     const center = size / 2;
     const radius = size * 0.42;
 
-    const spawnCityDots = (country: CountryCode, active: RegionKey, keepExisting: boolean) => {
-      const keys = citiesByCountry[country];
+    const spawnCityDots = (country: string, active: string, keepExisting: boolean) => {
+      const keys = citiesByCountry[country] ?? [];
       const existing = cityRef.current;
       cityRef.current = keys.map((key) => {
-        const [px, py] = cityPoints[key];
-        const targetX = center + px * radius;
-        const targetY = center + py * radius;
+        const region = regionsByKey[key];
+        const targetX = center + region.mapX * radius;
+        const targetY = center + region.mapY * radius;
         const isActive = key === active;
         const prev = keepExisting ? existing.find((c) => c.key === key) : undefined;
         return {
@@ -188,8 +203,10 @@ export function CountryMorph({
       return;
     }
 
-    const newCountry = regions[activeRegion].countryCode;
-    const prevCountry = prevRegion ? regions[prevRegion].countryCode : null;
+    const activeRegionData = regionsByKey[activeRegion];
+    if (!activeRegionData) return;
+    const newCountry = activeRegionData.countryCode;
+    const prevCountry = prevRegion ? regionsByKey[prevRegion]?.countryCode : null;
 
     if (prevCountry === newCountry) {
       // same country: just retarget which city is active, no re-explode
@@ -201,13 +218,14 @@ export function CountryMorph({
       return;
     }
 
-    const pool = POOL[newCountry];
+    const countryPool = pool[newCountry];
+    if (!countryPool || countryPool.length === 0) return;
     const land = landRef.current;
     const opening = prevRegion === null;
 
     for (let i = 0; i < land.length; i++) {
       const p = land[i];
-      const [px, py] = pool[i % pool.length];
+      const [px, py] = countryPool[i % countryPool.length];
       p.startX = p.x;
       p.startY = p.y;
       const angle = randRange(0, Math.PI * 2);
@@ -227,7 +245,7 @@ export function CountryMorph({
     elapsedRef.current = 0;
     if (opening) onSphereHiddenChangeRef.current(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeRegion, size]);
+  }, [activeRegion, size, regionsByKey, citiesByCountry, pool]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

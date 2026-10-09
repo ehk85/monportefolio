@@ -3,18 +3,26 @@
 import { useMemo, useRef, useState } from "react";
 import type { Marker } from "cobe";
 import { MapPin, X } from "lucide-react";
-import { regions, type RegionKey, type Experience as ExperienceType } from "@/data/experiences";
+import type { Experience as ExperienceType } from "@/data/experiences";
+import type { Region, CountryMap } from "@/data/region";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
 import { Tag } from "./ui/Tag";
 import { Globe } from "./Globe";
 import { CountryMorph } from "./CountryMorph";
 
-const regionOrder: RegionKey[] = ["lyon", "paris", "londres", "abidjan"];
 const GLOBE_SIZE = 300;
 
-export function Experience({ experiences }: { experiences: ExperienceType[] }) {
-  const [activeRegion, setActiveRegion] = useState<RegionKey | null>(null);
+export function Experience({
+  experiences,
+  regions,
+  countryMaps,
+}: {
+  experiences: ExperienceType[];
+  regions: Region[];
+  countryMaps: Record<string, CountryMap>;
+}) {
+  const [activeRegion, setActiveRegion] = useState<string | null>(null);
   const [sphereHidden, setSphereHidden] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,14 +31,19 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
   const pinRef = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
 
+  const regionsByKey = useMemo(
+    () => Object.fromEntries(regions.map((r) => [r.key, r])),
+    [regions]
+  );
+
   const sphereMarkers: Marker[] = useMemo(
     () =>
-      regionOrder.map((key) => ({
-        id: key,
-        location: [regions[key].lat, regions[key].lng] as [number, number],
+      regions.map((r) => ({
+        id: r.key,
+        location: [r.lat, r.lng] as [number, number],
         size: 0.05,
       })),
-    []
+    [regions]
   );
 
   const handlePinPixel = (pos: { x: number; y: number; opacity: number } | null) => {
@@ -75,7 +88,7 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
     }
   };
 
-  const toggleRegion = (key: RegionKey) => {
+  const toggleRegion = (key: string) => {
     setActiveRegion((prev) => (prev === key ? null : key));
   };
 
@@ -116,6 +129,8 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
               <Globe markers={sphereMarkers} size={GLOBE_SIZE} hidden={sphereHidden} />
               <CountryMorph
                 activeRegion={activeRegion}
+                regions={regions}
+                countryMaps={countryMaps}
                 size={GLOBE_SIZE}
                 onPinPixel={handlePinPixel}
                 onSphereHiddenChange={setSphereHidden}
@@ -129,16 +144,15 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              {regionOrder.map((key) => {
-                const region = regions[key];
-                const jobs = experiences.filter((e) => e.region === key);
-                const isActive = activeRegion === key;
+              {regions.map((region) => {
+                const jobs = experiences.filter((e) => e.region === region.key);
+                const isActive = activeRegion === region.key;
 
                 return (
                   <button
-                    key={key}
+                    key={region.key}
                     type="button"
-                    onClick={() => toggleRegion(key)}
+                    onClick={() => toggleRegion(region.key)}
                     className={`flex items-center justify-between gap-3 rounded-xl border bg-bg-surface p-4 text-left transition-colors ${
                       isActive ? "border-accent-emerald/50" : "border-white/5 hover:border-accent-cyan/30"
                     }`}
@@ -169,14 +183,14 @@ export function Experience({ experiences }: { experiences: ExperienceType[] }) {
             </div>
 
             <div ref={cardRef} className="relative">
-              {activeRegion ? (
+              {activeRegion && regionsByKey[activeRegion] ? (
                 <div
                   key={activeRegion}
                   className="animate-fadeUp rounded-xl border border-accent-emerald/30 bg-bg-surface p-6"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-xs font-semibold uppercase tracking-wide text-accent-emerald">
-                      {regions[activeRegion].label}, {regions[activeRegion].country}
+                      {regionsByKey[activeRegion].label}, {regionsByKey[activeRegion].country}
                     </p>
                     <button
                       type="button"

@@ -1,34 +1,3 @@
-export type RegionKey = "lyon" | "paris" | "londres" | "abidjan";
-
-export type CountryCode = "fra" | "gbr" | "civ";
-
-export type Region = {
-  label: string;
-  country: string;
-  countryCode: CountryCode;
-  lat: number;
-  lng: number;
-};
-
-export const regions: Record<RegionKey, Region> = {
-  lyon: { label: "Lyon", country: "France", countryCode: "fra", lat: 45.75, lng: 4.85 },
-  paris: { label: "Paris", country: "France", countryCode: "fra", lat: 48.8566, lng: 2.3522 },
-  londres: {
-    label: "Londres",
-    country: "Royaume-Uni",
-    countryCode: "gbr",
-    lat: 51.5074,
-    lng: -0.1278,
-  },
-  abidjan: {
-    label: "Abidjan",
-    country: "Côte d'Ivoire",
-    countryCode: "civ",
-    lat: 5.36,
-    lng: -4.0083,
-  },
-};
-
 export const contractTypes = [
   "Stage",
   "Stage alterné",
@@ -44,7 +13,7 @@ export type Experience = {
   role: string;
   company: string;
   location: string;
-  region: RegionKey;
+  region: string;
   period: string;
   contractType?: ContractType | null;
   current?: boolean;
@@ -53,7 +22,6 @@ export type Experience = {
   sort_order?: number;
 };
 
-// Le contenu lui-même (liste des postes) vit désormais dans Supabase
-// (table "experiences", gérée depuis /admin/experiences) — voir
-// lib/supabase/content.ts. Seule la géographie des régions reste ici,
-// car elle est liée aux cartes précalculées du globe (CountryMorph).
+// Le contenu (liste des postes) et la géographie des régions/cartes du
+// globe vivent désormais dans Supabase, gérés depuis /admin/experiences
+// — voir lib/supabase/content.ts et lib/supabase/geo.ts.

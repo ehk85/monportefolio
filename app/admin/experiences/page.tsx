@@ -2,6 +2,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { AdminNav } from "@/components/AdminNav";
 import { AdminExperienceManager } from "@/components/AdminExperienceManager";
 import type { Experience } from "@/data/experiences";
+import type { Region } from "@/data/region";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,22 @@ export default async function AdminExperiencesPage() {
     )
     .order("sort_order", { ascending: true });
 
+  const { data: regionRows } = await supabase
+    .from("regions")
+    .select("key, label, country, country_code, lat, lng, map_x, map_y")
+    .order("label", { ascending: true });
+
+  const regions: Region[] = (regionRows ?? []).map((row) => ({
+    key: row.key,
+    label: row.label,
+    country: row.country,
+    countryCode: row.country_code,
+    lat: row.lat,
+    lng: row.lng,
+    mapX: row.map_x,
+    mapY: row.map_y,
+  }));
+
   const items: Experience[] = (data ?? []).map((row) => ({
     id: row.id,
     role: row.role,
@@ -48,14 +65,15 @@ export default async function AdminExperiencesPage() {
           Expériences professionnelles
         </h1>
         <p className="mt-2 text-sm text-ink-secondary">
-          Visibles immédiatement sur le site (sous 2 min). La zone géographique doit être l&apos;une
-          des quatre déjà cartographiées sur le globe — pour un nouveau pays, reviens en discuter.
+          Visibles immédiatement sur le site (sous 2 min). Pour une nouvelle ville, utilise le
+          bouton « + » à côté de la zone géographique : sa carte de pays sera générée
+          automatiquement.
         </p>
 
         {error ? (
           <p className="mt-10 text-sm text-red-400">Erreur de chargement : {error.message}</p>
         ) : (
-          <AdminExperienceManager initialItems={items} />
+          <AdminExperienceManager initialItems={items} regions={regions} />
         )}
       </div>
     </main>
