@@ -13,5 +13,11 @@ export function getSupabaseAdminClient() {
   if (!url || !key) return null;
   return createClient(url, key, {
     auth: { persistSession: false },
+    // Next.js patche `fetch` et met en cache les requêtes GET par défaut,
+    // même sur une route marquée force-dynamic. On désactive ce cache
+    // explicitement pour que /admin voie toujours les derniers avis.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   });
 }
