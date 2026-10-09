@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check, X } from "lucide-react";
 import type { Testimonial } from "@/data/testimonialTypes";
+import { StarRating } from "./ui/StarRating";
 
 export function AdminTestimonialList({ initialItems }: { initialItems: Testimonial[] }) {
   const [items, setItems] = useState(initialItems);
@@ -39,6 +40,10 @@ export function AdminTestimonialList({ initialItems }: { initialItems: Testimoni
             <span className="text-xs text-ink-secondary">
               {new Date(item.created_at).toLocaleString("fr-FR")}
             </span>
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            <StarRating value={item.rating} readOnly size={14} />
+            <span className="text-xs text-ink-secondary">{item.rating} / 5</span>
           </div>
           <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-secondary">
             {item.comment}

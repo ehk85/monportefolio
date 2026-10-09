@@ -19,7 +19,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
   }
 
-  const { name, isAnonymous, company, comment } = (body ?? {}) as Record<string, unknown>;
+  const { name, isAnonymous, company, comment, rating } = (body ?? {}) as Record<string, unknown>;
+
+  const numericRating = typeof rating === "number" ? rating : NaN;
+  const isHalfStep = Math.round(numericRating * 2) === numericRating * 2;
+  if (!Number.isFinite(numericRating) || numericRating < 1 || numericRating > 5 || !isHalfStep) {
+    return NextResponse.json({ error: "Note invalide (de 1 à 5, par demi-étoile)." }, { status: 400 });
+  }
 
   if (typeof comment !== "string" || comment.trim().length === 0) {
     return NextResponse.json({ error: "Le commentaire est requis." }, { status: 400 });
@@ -57,6 +63,7 @@ export async function POST(request: Request) {
     name: anonymous ? null : trimmedName,
     is_anonymous: anonymous,
     company,
+    rating: numericRating,
     comment: comment.trim().slice(0, 20000),
   });
 
@@ -68,6 +75,7 @@ export async function POST(request: Request) {
     name: anonymous ? null : trimmedName,
     isAnonymous: anonymous,
     company,
+    rating: numericRating,
     comment: comment.trim(),
   });
 

@@ -23,7 +23,7 @@ export default async function AdminPage() {
 
   const { data, error } = await supabase
     .from("testimonials")
-    .select("id, name, is_anonymous, company, comment, status, created_at")
+    .select("id, name, is_anonymous, company, comment, rating, status, created_at")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 

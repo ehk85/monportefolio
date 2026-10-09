@@ -3,6 +3,7 @@ import { getSupabasePublicClient } from "@/lib/supabase/public";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
 import { AddTestimonialButton } from "./AddTestimonialButton";
+import { StarRating } from "./ui/StarRating";
 import type { Testimonial } from "@/data/testimonialTypes";
 
 async function getApprovedTestimonials(): Promise<Testimonial[]> {
@@ -11,7 +12,7 @@ async function getApprovedTestimonials(): Promise<Testimonial[]> {
 
   const { data, error } = await supabase
     .from("testimonials")
-    .select("id, name, is_anonymous, company, comment, status, created_at")
+    .select("id, name, is_anonymous, company, comment, rating, status, created_at")
     .eq("status", "approved")
     .order("created_at", { ascending: false });
 
@@ -38,7 +39,10 @@ export async function Testimonials() {
           {testimonials.map((t, i) => (
             <AnimatedSection key={t.id} delay={(i % 3) * 0.08}>
               <div className="flex h-full flex-col rounded-xl border border-white/5 bg-bg-surface p-6">
-                <Quote size={20} className="text-accent-cyan/60" />
+                <div className="flex items-center justify-between">
+                  <Quote size={20} className="text-accent-cyan/60" />
+                  <StarRating value={t.rating} readOnly size={14} />
+                </div>
                 <p className="mt-3 flex-1 text-sm leading-relaxed text-ink-secondary">
                   {t.comment}
                 </p>

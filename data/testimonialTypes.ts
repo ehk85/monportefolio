@@ -4,6 +4,7 @@ export type Testimonial = {
   is_anonymous: boolean;
   company: string;
   comment: string;
+  rating: number;
   status: "pending" | "approved" | "rejected";
   created_at: string;
 };

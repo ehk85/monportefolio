@@ -8,9 +8,17 @@ create table if not exists public.testimonials (
   is_anonymous boolean not null default false,
   company text not null,
   comment text not null,
+  rating numeric(2, 1) not null default 5,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   created_at timestamptz not null default now()
 );
+
+-- Si la table existait déjà avant l'ajout de la note : ajoute la colonne
+-- et sa contrainte sans tout recréer (sans effet si déjà appliqué).
+alter table public.testimonials add column if not exists rating numeric(2, 1) not null default 5;
+alter table public.testimonials drop constraint if exists testimonials_rating_check;
+alter table public.testimonials add constraint testimonials_rating_check
+  check (rating >= 1 and rating <= 5 and (rating * 2) = round(rating * 2));
 
 alter table public.testimonials enable row level security;
 

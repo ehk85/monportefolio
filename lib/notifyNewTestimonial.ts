@@ -11,6 +11,7 @@ export async function notifyNewTestimonial(params: {
   name: string | null;
   isAnonymous: boolean;
   company: string;
+  rating: number;
   comment: string;
 }) {
   const apiKey = process.env.RESEND_API_KEY;
@@ -24,9 +25,10 @@ export async function notifyNewTestimonial(params: {
     await resend.emails.send({
       from: "Portfolio <onboarding@resend.dev>",
       to: profile.email,
-      subject: `Nouvel avis à valider — ${author} (${params.company})`,
+      subject: `Nouvel avis à valider — ${author} (${params.company}, ${params.rating}/5)`,
       text: [
         `${author} vient de déposer un avis via le site, à propos de son passage chez/à ${params.company}.`,
+        `Note : ${params.rating} / 5`,
         "",
         params.comment,
         "",

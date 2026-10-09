@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
 import { testimonialSources } from "@/data/testimonialSources";
+import { StarRating } from "./ui/StarRating";
 
 const MAX_WORDS = 2000;
 
@@ -17,6 +18,7 @@ export function TestimonialForm({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [company, setCompany] = useState("");
+  const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "done" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -27,6 +29,7 @@ export function TestimonialForm({ onClose }: { onClose: () => void }) {
     !overLimit &&
     comment.trim().length > 0 &&
     company.length > 0 &&
+    rating >= 1 &&
     (isAnonymous || name.trim().length > 0) &&
     status !== "submitting";
 
@@ -39,7 +42,7 @@ export function TestimonialForm({ onClose }: { onClose: () => void }) {
       const res = await fetch("/api/testimonials", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, isAnonymous, company, comment }),
+        body: JSON.stringify({ name, isAnonymous, company, rating, comment }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -125,6 +128,16 @@ export function TestimonialForm({ onClose }: { onClose: () => void }) {
                 ))}
               </select>
             </label>
+
+            <div>
+              <span className="text-xs font-medium text-ink-secondary">Note</span>
+              <div className="mt-1 flex items-center gap-2">
+                <StarRating value={rating} onChange={setRating} size={24} />
+                <span className="text-xs text-ink-secondary">
+                  {rating > 0 ? `${rating} / 5` : "Choisis une note"}
+                </span>
+              </div>
+            </div>
 
             <label>
               <div className="flex items-center justify-between">
