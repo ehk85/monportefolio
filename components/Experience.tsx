@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import type { Marker } from "cobe";
 import { MapPin, X } from "lucide-react";
-import { experiences, regions, type RegionKey } from "@/data/experiences";
+import { regions, type RegionKey, type Experience as ExperienceType } from "@/data/experiences";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
 import { Tag } from "./ui/Tag";
@@ -13,7 +13,7 @@ import { CountryMorph } from "./CountryMorph";
 const regionOrder: RegionKey[] = ["lyon", "paris", "londres", "abidjan"];
 const GLOBE_SIZE = 300;
 
-export function Experience() {
+export function Experience({ experiences }: { experiences: ExperienceType[] }) {
   const [activeRegion, setActiveRegion] = useState<RegionKey | null>(null);
   const [sphereHidden, setSphereHidden] = useState(false);
 
@@ -192,7 +192,7 @@ export function Experience() {
                     {experiences
                       .filter((e) => e.region === activeRegion)
                       .map((job) => (
-                        <div key={job.company}>
+                        <div key={job.id}>
                           <div className="flex flex-wrap items-baseline justify-between gap-2">
                             <h4 className="text-sm font-semibold text-ink-primary">{job.role}</h4>
                             <span className="text-xs font-medium text-accent-cyan">{job.period}</span>

@@ -13,16 +13,18 @@ Le site est disponible sur [http://localhost:3000](http://localhost:3000).
 
 ## Contenu
 
-Toutes les données du CV sont centralisées dans le dossier `data/` :
+Les expériences et formations sont gérables directement depuis `/admin/experiences` et
+`/admin/education` (voir plus bas) — pas besoin de toucher au code pour ça. Le reste du contenu
+du CV est centralisé dans le dossier `data/` :
 
 - `profile.ts` — informations personnelles, atouts, langues, centres d'intérêt
-- `experiences.ts` — expériences professionnelles (régions pour le globe interactif)
-- `education.ts` — diplômes et formations
+- `experiences.ts` / `education.ts` — types partagés + régions du globe interactif (le contenu
+  lui-même vit dans Supabase, voir `lib/supabase/content.ts`)
 - `skills.ts` — compétences par catégorie
 - `projects.ts` — projets académiques et personnels
 - `contract.ts` / `testimonialSources.ts` — options de l'écran d'entrée et du formulaire d'avis
 
-Pour mettre à jour le contenu du site, il suffit de modifier ces fichiers.
+Pour ces derniers, il suffit de modifier le fichier concerné.
 
 ## Section Avis (témoignages)
 
@@ -38,6 +40,20 @@ validé sur `/admin`, protégée par mot de passe. Fonctionnement et configurati
 3. Ajoute les mêmes variables dans Vercel (Project Settings > Environment Variables) pour la prod.
 
 Sans ces variables, le site fonctionne normalement : la section affiche juste "Aucun avis publié".
+
+## Administration (/admin)
+
+Protégée par mot de passe (`ADMIN_USER` / `ADMIN_PASSWORD`), trois sections :
+
+- **Avis en attente** (`/admin`) — approuver/rejeter les avis déposés publiquement
+- **Expériences** (`/admin/experiences`) — ajouter, modifier, réordonner, supprimer un poste.
+  La « zone géographique » doit être l'une des quatre déjà cartographiées sur le globe (Lyon,
+  Paris, Londres, Abidjan) — pour un nouveau pays, une nouvelle carte doit être générée dans le code.
+- **Formations** (`/admin/education`) — idem, sans contrainte de zone
+
+Tables Supabase créées via `supabase/content_schema.sql` (contenu repris une fois dans
+`supabase/content_seed.sql`). Les changements apparaissent sur le site sous 2 minutes
+(revalidation ISR), sans redéploiement.
 
 ## Déploiement
 

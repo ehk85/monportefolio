@@ -1,0 +1,73 @@
+import { NextResponse } from "next/server";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { regions, type RegionKey } from "@/data/experiences";
+
+function linesToArray(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+export async function POST(request: Request) {
+  const supabase = getSupabaseAdminClient();
+  if (!supabase) {
+    return NextResponse.json({ error: "Supabase non configuré." }, { status: 503 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Requête invalide." }, { status: 400 });
+  }
+
+  const { role, company, location, region, period, isCurrent, missions, stack } = (body ??
+    {}) as Record<string, unknown>;
+
+  if (typeof role !== "string" || role.trim().length === 0) {
+    return NextResponse.json({ error: "Le poste est requis." }, { status: 400 });
+  }
+  if (typeof company !== "string" || company.trim().length === 0) {
+    return NextResponse.json({ error: "L'entreprise est requise." }, { status: 400 });
+  }
+  if (typeof location !== "string" || location.trim().length === 0) {
+    return NextResponse.json({ error: "Le lieu est requis." }, { status: 400 });
+  }
+  if (typeof period !== "string" || period.trim().length === 0) {
+    return NextResponse.json({ error: "La période est requise." }, { status: 400 });
+  }
+  if (typeof region !== "string" || !(region in regions)) {
+    return NextResponse.json(
+      { error: "Zone géographique invalide (lyon, paris, londres ou abidjan)." },
+      { status: 400 }
+    );
+  }
+
+  const { data: minRow } = await supabase
+    .from("experiences")
+    .select("sort_order")
+    .order("sort_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const sortOrder = minRow ? minRow.sort_order - 1 : 0;
+
+  const { error } = await supabase.from("experiences").insert({
+    role: role.trim(),
+    company: company.trim(),
+    location: location.trim(),
+    region: region as RegionKey,
+    period: period.trim(),
+    is_current: Boolean(isCurrent),
+    missions: linesToArray(missions),
+    stack: linesToArray(stack),
+    sort_order: sortOrder,
+  });
+
+  if (error) {
+    return NextResponse.json({ error: "Échec de l'enregistrement." }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true }, { status: 201 });
+}

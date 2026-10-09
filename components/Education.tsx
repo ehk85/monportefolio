@@ -1,11 +1,11 @@
 "use client";
 
-import { education } from "@/data/education";
+import type { Education as EducationType } from "@/data/education";
 import { SectionHeading } from "./ui/SectionHeading";
 import { AnimatedSection } from "./ui/AnimatedSection";
 import { useContract } from "./ContractGate";
 
-export function Education() {
+export function Education({ education }: { education: EducationType[] }) {
   const { choice } = useContract();
   const isAlternance = choice === "alternance";
   const isCdi = choice === "cdi" || choice === "cdd";
@@ -21,7 +21,7 @@ export function Education() {
             const showOngoingBadge = edu.current && !isAlternance;
             const detail = edu.current && isAlternance ? "Formation souhaitée" : edu.detail;
             return (
-              <AnimatedSection key={edu.degree} delay={(i % 2) * 0.1}>
+              <AnimatedSection key={edu.id} delay={(i % 2) * 0.1}>
                 <div className="h-full rounded-xl border border-white/5 bg-bg-surface p-6">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-xs font-semibold uppercase tracking-wide text-accent-cyan">
